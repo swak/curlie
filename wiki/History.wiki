@@ -1,0 +1,16 @@
+#curlIE history
+
+== 2008-08-06 ==
+[http://code.google.com/p/curlie/source/browse/trunk/curlIE.wsf?r=2 First public release: #2].
+
+== 2008-07-09 ==
+Implemented -o and binary files saving using ADODB.Stream.
+
+== 2007-09-01 ==
+Initial implementation of curlIE (which I called mini-curl at the time). Most of the code is the command line parsing to match [http://curl.haxx.se/ cURL].
+
+== 2006-09-12 ==
+First basic implementation of a basic generic download tool in WSH.
+
+== 2006-07-09 ==
+My first experiment with XMLHttpRequest in WSH to explore the Google geocoding API.
