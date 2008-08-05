@@ -1,0 +1,349 @@
+﻿<?xml version="1.0" encoding="windows-1252" standalone="yes"?>
+<?job logo="no" validate="true" debug="true" error="true"?>
+<job>
+  <resource id="copyright">CurlIE, Copyright © 2007-2008 Olivier Mengué</resource>
+
+  <resource id="license">
+Copyright © 2007-2008 Olivier Mengué
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+  </resource>
+
+  <!-- cscript //H:CScript //S -->
+  <object id="xmlhttp" progid="Msxml2.XMLHTTP.5.0"/>
+  <object id="stream" progid="ADODB.Stream"/>
+  <reference object="Msxml2.XMLHTTP.5.0"/>
+  <reference object="ADODB.Stream"/>
+
+  <script language="javascript"><![CDATA[
+/*-
+ * Copyright © 2007-2008 Olivier Mengué
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by 
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+
+
+this.vbObjectError = 0x80040000;
+
+// ==[ CommandLine prototype ]=================================================
+
+var CommandLine = function(commandName, options, unnamedArgs) {
+    this.commandName = commandName;
+    this.short = {};
+    this.long = {};
+    this.options = [];
+    this.unnamedArgs = unnamedArgs;
+    for(var o in options) {
+        var opt = new CommandLine.Option(options[o]);
+        this.options[opt.name] = opt;
+        if (opt.short)
+            for(var s in opt.short)
+               this.short[opt.short[s]] = opt;
+        if (opt.long)
+            for(var l in opt.long)
+               this.long[opt.long[l]] = opt;
+    }
+}
+
+CommandLine.Option = function(opt) {
+		this.name = opt[0][0];
+		this.arg = opt.length > 1 ? opt[1] : false;
+		this.help = opt.length > 2 ? opt[2] : '';
+		this.callback = opt.length > 3 ? opt[3] : null;
+		this.defaut = this.arg ? ((opt.length > 4) ? opt[4] : '') : false;
+		this.short = null;
+		this.long = null;
+		for(var i in opt[0]) {
+            var name = opt[0][i];
+		    if (name.length == 1) {
+			if (this.short == null) this.short = new Array;
+			this.short.push(name);
+		    } else {
+			if (this.long == null) this.long = new Array;
+			this.long.push(name);
+            }
+		}
+    }
+
+CommandLine.prototype = {
+    defaut: function() {
+        var d = {};
+        for(var o in this.options) {
+            var opt = this.options[o];
+            if (opt.arg) {
+                var p = opt.arg.charAt(0);
+                if (p == '[')
+                    d[opt.name] = [];
+                else if (p == '+')
+                    d[opt.name] = 0;
+                else
+                    d[opt.name] = opt.defaut;
+            } else
+                d[opt.name] = opt.defaut;
+        }
+        return d;
+    },
+    usage: function() {
+        var opts = '';
+        for(o in this.options) {
+		    var opt = this.options[o];
+		    var s = '   ', t = '';
+		    if (opt.short)
+			s = ' -'+opt.short[0];
+		    if (opt.long)
+			t = '--'+opt.long[0];
+            if (opt.short && opt.long)
+		    var s = ' ' + (opt.short ? '-'+opt.short[0] : '  ')
+				+ (opt.short && opt.long ? '/' : ' ')
+				+ (opt.long ? '--'+opt.long[0]+' ' : '')
+				+ (opt.arg ? '<'+opt.arg.substr(1)+'> ' : '');
+            while (s.length < 20) s += ' ';
+            opts += s + opt.help.replace(/\n */g, '\n                     ') + '\n';
+		}
+		return 'Usage: '+this.commandName+' [options...] '+this.unnamedArgs.join(' ')+'\nOptions:\n'+opts;
+    },
+    parse: function(args) {
+        var values = this.defaut();
+        var optidx = 0;
+        for(; optidx<args.length; optidx++) {
+            var arg = args[optidx];
+            if (arg.length < 2 || arg.charAt(0) != '-')
+                break;
+            if (arg == '--' ) {
+                optidx++;
+                break;
+            }
+            var opt;
+            if (arg.length > 2 && arg.charAt(1) == '-') {
+			var name = arg.substr(2);
+                if (! (name in this.long))
+			    throw new Error(vbObjectError+2000, "unknown option: "+ arg);
+			opt = this.long[name];
+            } else {
+			var name = arg.charAt(1);
+			if (! (name in this.short))
+			    throw new Error(vbObjectError+2000, "unknown option: "+ arg);
+                opt = this.short[name];
+            }
+            var optval = true;
+            if (opt.arg) {
+                optidx++;
+                if (optidx == args.length)
+                    throw new Error(vbObjectError+2001, "missing argument for option " + arg);
+                var optval = args[optidx];
+                if (opt.callback)
+                     optval = opt.callback(optval, values[opt.name]);
+            } else if (typeof values[opt.name] == 'Number') {
+			optval = values[opt.name] + (optval ? 1 : -1);
+		    }
+            if (typeof values[opt.name] == 'object' && values[opt.name].constructor == Array)
+                values[opt.name].push(optval);
+            else
+                values[opt.name] = optval;
+        }
+        return {
+            options: values,
+            args: args.slice(optidx)
+        };
+    }
+};
+
+
+// ==[ CScriptCommandLine prototype ]==========================================
+
+var CScriptCommandLine = function(options, unnamedArgs) {
+    var env = WScript.FullName.replace(/^.*\\(.*).exe/i, "$1");
+    if (env != 'cscript') {
+        WScript.Echo('You shoud launch the command from a DOS window.\r\n'+
+                     '"cscript" expected instead of "'+env+'".');
+        WScript.Quit(1);
+    }
+    return this.CommandLine$(WScript.ScriptName, options, unnamedArgs);
+}
+CScriptCommandLine.prototype.CommandLine$ = CommandLine;
+
+for(var v in CommandLine.prototype) {
+    CScriptCommandLine.prototype[v] = CommandLine.prototype[v];
+}
+
+CScriptCommandLine.prototype.CommandLine$usage = CommandLine.prototype.usage;
+CScriptCommandLine.prototype.usage = function() {
+    WScript.StdErr.Write(this.CommandLine$usage().replace(/\r?\n/g, '\r\n'));
+    WScript.Quit(127);
+}
+CScriptCommandLine.prototype.CommandLine$parse = CommandLine.prototype.parse;
+CScriptCommandLine.prototype.parse = function() {
+    var args = [];
+    for(var optidx=0; optidx<WScript.Arguments.length; optidx++)
+        args.push(WScript.Arguments(optidx));
+    try {
+        var r = this.CommandLine$parse(args);
+    } catch (e) {
+        WScript.Echo(e.description);
+        WScript.StdErr.Write(this.usage());
+        WScript.Quit(1);
+    }
+    return r;
+}
+
+
+
+// ==[ main ]==================================================================
+
+  var method = 'GET';
+
+  var cmdline = new CScriptCommandLine([
+   //[ [ 'user-agent', 'A' ], "'string", 'Not available', function(){throw new Error("option -A is not supported (XMLHTTP restriction)");} ]
+  ,[ [ 'data', 'd' ], "@data"      , 'HTTP POST data' ]
+  ,[ [ 'get', 'G' ],               , 'Send the -d data with a HTTP GET' ]
+  ,[ [ 'header', 'H' ], "[line"    , 'Custom header to pass to server (filtered by XMLHTTP)', 
+       function(header) {
+         var m = header.match(/^[A-Z]([^:]*): (.*)$/);
+         if (!m) throw new Error(vbObjectError+3001, "invalid header format: "+header);
+         return [ m[1], m[2] ];
+       } ]
+  ,[ [ 'include', 'i' ],           , 'Include protocol headers in the output' ]
+  ,[ [ 'head', 'I' ],              , 'Show document info only' ]
+  ,[ [ 'output', 'o' ],		"'file"    , 'Write output to <file> instead of stdout (required for binary)' ]
+  ,[ [ 'referer', 'e' ], "'referer", 'Referer URL' ]
+], [
+   [ 'url' ]
+]);
+
+
+
+
+  var parsed = cmdline.parse();
+  //WScript.Echo(parsed);
+
+  if (parsed.args.length != 1)
+    cmdline.usage();
+
+  var url = parsed.args[0];
+
+  var data = null;
+  var data = parsed.options.data;
+
+
+  if (data && parsed.options.get) {
+    url += (url.indexOf("?") > -1 ? "&" : "?") + data;
+    data = null;
+  }
+  if (data)
+    method = 'POST';
+
+  if (parsed.options.head)
+    method = 'HEAD';
+
+
+  xmlhttp.open(method, url, false);
+
+  for(var h in parsed.options.header) {
+    /*
+    var m = parsed.options.header[h].match(/^([^:]*): (.*)$/);
+    if (m) {
+      WScript.Echo(m[1]+' => '+m[2]);
+      xmlhttp.setRequestHeader(m[1], m[2]);
+    }
+    */
+    var m = parsed.options.header[h];
+    xmlhttp.setRequestHeader(m[0], m[1]);
+  }
+  if (parsed.options['user-agent']) {
+    WScript.Echo("UA: "+parsed.options['user-agent']);
+    xmlhttp.setRequestHeader('User-Agent', parsed.options['user_agent']);
+  }
+  if (parsed.options.referer)
+    xmlhttp.setRequestHeader('Referer', parsed.options.referer);
+
+  //WScript.Quit(0);
+
+  var requestDone = false;
+  xmlhttp.onreadystatechange = function() {
+    //WScript.Echo(xmlhttp.readyState);
+    if (!requestDone && xmlhttp.readyState == 4 && xmlhttp.status > 0) { // loaded
+        if (parsed.options.include || parsed.options.head) {
+          // TODO send to parsed.options.output
+          var out = "HTTP/1.1 "+xmlhttp.status+" "+xmlhttp.statusText + "\r\n"
+			  + xmlhttp.getAllResponseHeaders();
+		  WScript.StdOut.Write(out);
+        }
+        if (!parsed.options.head) {
+          if (parsed.options.output && parsed.options.output != '-') {
+		    stream.Type = adTypeBinary;
+		    stream.Open();
+		    stream.Write(xmlhttp.responseBody);
+		    stream.SaveToFile(parsed.options.output, adSaveCreateOverwrite);
+		    stream.Close();
+		  } else {
+		    try {
+		      WScript.StdOut.Write(xmlhttp.responseText);
+		    } catch (err) {
+		      WScript.StdErr.Write("curlie: CScript can't output binary files to StdOut ("+err.number+ " " + err.description+")");
+		    }
+          }
+        }
+    }
+  }
+
+
+  try {
+    xmlhttp.send(data);
+    WScript.Quit(0);
+  } catch(e) {
+    switch (xmlhttp.status) {
+    case 12007:
+      WScript.StdErr.Write("curlie: (6) "+e.description);
+      break;
+    default:
+      WScript.StdErr.Write("curlie: ("+xmlhttp.status+") "+e.description);
+    }
+  }
+
+  ]]></script>
+<resource id="usage">
+
+</resource>
+<!-- vim:set ts=4 sw=4: -->
+</job>
