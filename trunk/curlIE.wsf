@@ -230,7 +230,7 @@ CScriptCommandLine.prototype.parse = function() {
   //WScript.Echo(parsed);
 
   if (parsed.options.version) {
-    WScript.Echo("curlIE "+"$Id$".replace(/....(\d+ .{20}).*$/, "$1"));
+    WScript.Echo("curlIE "+"$Id$".replace(/^.Id: .+ (\d+ .{20}).*$/, "$1"));
     WScript.Quit(0);
   }
 
