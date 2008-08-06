@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="windows-1252" standalone="yes"?>
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?job logo="no" validate="true" debug="true" error="true"?>
 <job>
   <resource id="copyright">CurlIE, Copyright © 2007-2008 Olivier Mengué</resource>
@@ -26,43 +26,13 @@ OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
   </resource>
 
-  <!-- cscript //H:CScript //S -->
+  <!-- cscript //H:CScript //NoLogo //S -->
   <object id="xmlhttp" progid="Msxml2.XMLHTTP.5.0"/>
   <object id="stream" progid="ADODB.Stream"/>
   <reference object="Msxml2.XMLHTTP.5.0"/>
   <reference object="ADODB.Stream"/>
 
   <script language="javascript"><![CDATA[
-/*-
- * Copyright © 2007-2008 Olivier Mengué
- * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by 
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- */
-
-
 
 this.vbObjectError = 0x80040000;
 
@@ -194,9 +164,9 @@ CommandLine.prototype = {
 
 var CScriptCommandLine = function(options, unnamedArgs) {
     var env = WScript.FullName.replace(/^.*\\(.*).exe/i, "$1");
-    if (env != 'cscript') {
+    if (env.toLowerCase() != 'cscript') {
         WScript.Echo('You shoud launch the command from a DOS window.\r\n'+
-                     '"cscript" expected instead of "'+env+'".');
+                     '"CScript" engine expected instead of "'+env+'".');
         WScript.Quit(1);
     }
     return this.CommandLine$(WScript.ScriptName, options, unnamedArgs);
@@ -235,9 +205,10 @@ CScriptCommandLine.prototype.parse = function() {
 
   var cmdline = new CScriptCommandLine([
    //[ [ 'user-agent', 'A' ], "'string", 'Not available', function(){throw new Error("option -A is not supported (XMLHTTP restriction)");} ]
-  ,[ [ 'data', 'd' ], "@data"      , 'HTTP POST data' ]
+  ,[ [ 'data', 'd' ], "@data"      , 'HTTP POST data (not working yet)' ]
   ,[ [ 'get', 'G' ],               , 'Send the -d data with a HTTP GET' ]
-  ,[ [ 'header', 'H' ], "[line"    , 'Custom header to pass to server (filtered by XMLHTTP)', 
+  ,[ [ 'help', 'h' ],              , 'This help text' ]
+  ,[ [ 'header', 'H' ], "[line"    , 'Custom header to pass to server (filtered by XMLHTTP)',
        function(header) {
          var m = header.match(/^[A-Z]([^:]*): (.*)$/);
          if (!m) throw new Error(vbObjectError+3001, "invalid header format: "+header);
@@ -247,6 +218,7 @@ CScriptCommandLine.prototype.parse = function() {
   ,[ [ 'head', 'I' ],              , 'Show document info only' ]
   ,[ [ 'output', 'o' ],		"'file"    , 'Write output to <file> instead of stdout (required for binary)' ]
   ,[ [ 'referer', 'e' ], "'referer", 'Referer URL' ]
+  ,[ [ 'version', 'V' ],           , 'Show version number and quit' ]
 ], [
    [ 'url' ]
 ]);
@@ -257,7 +229,12 @@ CScriptCommandLine.prototype.parse = function() {
   var parsed = cmdline.parse();
   //WScript.Echo(parsed);
 
-  if (parsed.args.length != 1)
+  if (parsed.options.version) {
+    WScript.Echo("curlIE "+"$Id$".replace(/....(\d+ .{20}).*$/, "$1"));
+    WScript.Quit(0);
+  }
+
+  if (parsed.options.help || parsed.args.length != 1)
     cmdline.usage();
 
   var url = parsed.args[0];
