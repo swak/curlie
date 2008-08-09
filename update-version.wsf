@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="windows-1252"?>
+<job>
+  <!-- Copyright © 2008 Olivier Mengué -->
+
+  <!-- Doc: http://msdn.microsoft.com/en-us/library/ms764730.aspx -->
+  <object id="xmlDoc" progid="Msxml2.DOMDocument"/>
+
+  <script language="JScript"><![CDATA[
+
+    var wsf = "curlIE.wsf";
+    xmlDoc.preserveWhiteSpace = true;
+	xmlDoc.load(f);
+    var node = xmlDoc.selectNodes("/job/resource[@id='version']")(0).firstChild;
+    var version = node.text;
+
+    var v = /^(.+\.)0*([0-9]*)$/.exec(version);
+    var newMinor = (parseInt(v[2])+1).toString();
+    while (newMinor.length < 3) newMinor = '0' + newMinor;
+    var newVersion = v[1] + newMinor;
+
+    WScript.Echo(version+' -> '+newVersion);
+
+    node.text = newVersion;
+    xmlDoc.save(wsf);
+
+  ]]></script>
+
+  <!-- vim:set ts=4 sw=2 sts=2: -->
+</job>
