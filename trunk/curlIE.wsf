@@ -1,8 +1,8 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?job logo="no" validate="true" debug="true" error="true"?>
-<job>
+<job id="curlIE">
   <resource id="copyright">CurlIE, Copyright © 2007-2008 Olivier Mengué</resource>
-
+  <resource id="version">1.007</resource>
   <resource id="license">
 Copyright © 2007-2008 Olivier Mengué
 
@@ -24,7 +24,7 @@ NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
 LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-  </resource>
+</resource>
 
   <!-- cscript //H:CScript //NoLogo //S -->
   <object id="xmlhttp" progid="Msxml2.XMLHTTP.5.0"/>
@@ -230,7 +230,8 @@ CScriptCommandLine.prototype.parse = function() {
   //WScript.Echo(parsed);
 
   if (parsed.options.version) {
-    WScript.Echo("curlIE "+"$Id$".replace(/^.Id: .+ (\d+ .{20}).*$/, "$1"));
+    //WScript.Echo("curlIE "+"$Id$".replace(/^.Id: .+ (\d+ .{20}).*$/, "$1"));
+    WScript.Echo("curlIE "+getResource("version"));
     WScript.Quit(0);
   }
 
@@ -297,7 +298,7 @@ CScriptCommandLine.prototype.parse = function() {
 		    try {
 		      WScript.StdOut.Write(xmlhttp.responseText);
 		    } catch (err) {
-		      WScript.StdErr.Write("curlie: CScript can't output binary files to StdOut ("+err.number+ " " + err.description+")");
+		      WScript.StdErr.Write("curlIE: CScript can't output binary files to StdOut ("+err.number+ " " + err.description+")");
 		    }
           }
         }
@@ -311,16 +312,13 @@ CScriptCommandLine.prototype.parse = function() {
   } catch(e) {
     switch (xmlhttp.status) {
     case 12007:
-      WScript.StdErr.Write("curlie: (6) "+e.description);
+      WScript.StdErr.Write("curlIE: (6) "+e.description);
       break;
     default:
-      WScript.StdErr.Write("curlie: ("+xmlhttp.status+") "+e.description);
+      WScript.StdErr.Write("curlIE: ("+xmlhttp.status+") "+e.description);
     }
   }
 
   ]]></script>
-<resource id="usage">
-
-</resource>
-<!-- vim:set ts=4 sw=4: -->
+  <!-- vim:set ts=4 sw=2 sts=2: -->
 </job>
