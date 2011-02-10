@@ -1,10 +1,10 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <?job logo="no" validate="true" debug="true" error="true"?>
 <job id="curlIE">
-  <resource id="copyright">CurlIE, Copyright © 2007-2008 Olivier Mengué</resource>
+  <resource id="copyright">CurlIE, Copyright © 2007-2011 Olivier Mengué</resource>
   <resource id="version">1.007</resource>
   <resource id="license">
-Copyright © 2007-2008 Olivier Mengué
+Copyright © 2007-2011 Olivier Mengué
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
