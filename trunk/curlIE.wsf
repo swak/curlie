@@ -240,6 +240,8 @@ CScriptCommandLine.prototype.parse = function() {
     cmdline.usage();
 
   var url = parsed.args[0];
+  if (!/^[a-z]+:/i.test(url))
+    url = 'http://' + url;
 
   var data = null;
   var data = parsed.options.data;
