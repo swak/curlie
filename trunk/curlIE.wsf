@@ -27,9 +27,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 </resource>
 
   <!-- cscript //H:CScript //NoLogo //S -->
-  <object id="xmlhttp" progid="Msxml2.XMLHTTP.5.0"/>
+  <object id="xmlhttp" progid="Msxml2.XMLHTTP"/>
   <object id="stream" progid="ADODB.Stream"/>
-  <reference object="Msxml2.XMLHTTP.5.0"/>
+  <reference object="Msxml2.XMLHTTP"/>
   <reference object="ADODB.Stream"/>
 
   <script language="javascript"><![CDATA[
