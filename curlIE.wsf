@@ -255,8 +255,14 @@ CScriptCommandLine.prototype.parse = function() {
   if (parsed.options.head)
     method = 'HEAD';
 
-  var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
-  var stream;
+  var xmlhttp, stream;
+
+  try {
+    xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+  } catch (e) {
+    WScript.StdErr.WriteLine("curlIE: Msxml2.XMLHTTP object not found.");
+    WScript.Quit(255);
+  }
 
   xmlhttp.open(method, url, false);
 
@@ -292,7 +298,6 @@ CScriptCommandLine.prototype.parse = function() {
         }
         if (!parsed.options.head) {
           if (parsed.options.output && parsed.options.output != '-') {
-            WScript.Echo();
 			stream = new ActiveXObject("ADODB.Stream");
             var adTypeBinary = 1;
             var adSaveCreateOverwrite = 2;
