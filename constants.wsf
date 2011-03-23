@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<?job logo="no" validate="true" debug="true" error="true"?>
+<job id="constants">
+  <reference object="Msxml2.XMLHTTP.6.0"/>
+  <reference object="ADODB.Stream"/>
+
+  <script language="javascript"><![CDATA[
+
+    var o, i, c, l, StdOut = WScript.StdOut;
+    var constants = {
+      "ADODB.Stream": [
+        "adTypeBinary",
+        "adSaveCreateOverwrite"
+      ],
+      "Msxml2.XMLHTTP": [
+      ]
+    };
+
+    for(o in constants) {
+      if (!constants.hasOwnProperty(o))
+        continue;
+      StdOut.WriteLine(o+":");
+      c = constants[o];
+      l = c.length;
+      for(i = 0; i<l; i++) {
+        StdOut.WriteLine("  var "+c[i]+" = "+eval(c[i]).toString()+";");
+      }
+    }
+
+
+  ]]></script>
+  <!-- vim:set ts=4 sw=2 sts=2: -->
+</job>
