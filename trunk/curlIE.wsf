@@ -27,10 +27,11 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 </resource>
 
   <!-- cscript //H:CScript //NoLogo //S -->
-  <object id="xmlhttp" progid="Msxml2.XMLHTTP"/>
-  <object id="stream" progid="ADODB.Stream"/>
-  <reference object="Msxml2.XMLHTTP"/>
+
+  <!--
+  <reference object="Msxml2.XMLHTTP.6.0"/>
   <reference object="ADODB.Stream"/>
+  -->
 
   <script language="javascript"><![CDATA[
 
@@ -254,6 +255,8 @@ CScriptCommandLine.prototype.parse = function() {
   if (parsed.options.head)
     method = 'HEAD';
 
+  var xmlhttp = new ActiveXObject("Msxml2.XMLHTTP");
+  var stream;
 
   xmlhttp.open(method, url, false);
 
@@ -289,6 +292,11 @@ CScriptCommandLine.prototype.parse = function() {
         }
         if (!parsed.options.head) {
           if (parsed.options.output && parsed.options.output != '-') {
+            WScript.Echo();
+			stream = new ActiveXObject("ADODB.Stream");
+            var adTypeBinary = 1;
+            var adSaveCreateOverwrite = 2;
+
 		    stream.Type = adTypeBinary;
 		    stream.Open();
 		    stream.Write(xmlhttp.responseBody);
