@@ -2,7 +2,7 @@
 <?job logo="no" validate="true" debug="true" error="true"?>
 <job id="curlIE">
   <resource id="copyright">CurlIE, Copyright © 2007-2011 Olivier Mengué</resource>
-  <resource id="version">1.007</resource>
+  <resource id="version">1.008</resource>
   <resource id="license">
 Copyright © 2007-2011 Olivier Mengué
 
@@ -96,7 +96,7 @@ CommandLine.prototype = {
         return d;
     },
     usage: function() {
-        var opts = '';
+        var opts = '', s;
         for(o in this.options) {
 		    var opt = this.options[o];
 		    var s = '   ', t = '';
@@ -104,8 +104,7 @@ CommandLine.prototype = {
 			s = ' -'+opt.short[0];
 		    if (opt.long)
 			t = '--'+opt.long[0];
-            if (opt.short && opt.long)
-		    var s = ' ' + (opt.short ? '-'+opt.short[0] : '  ')
+		    s = ' ' + (opt.short ? '-'+opt.short[0] : '  ')
 				+ (opt.short && opt.long ? '/' : ' ')
 				+ (opt.long ? '--'+opt.long[0]+' ' : '')
 				+ (opt.arg ? '<'+opt.arg.substr(1)+'> ' : '');
@@ -218,6 +217,7 @@ CScriptCommandLine.prototype.parse = function() {
   ,[ [ 'include', 'i' ],           , 'Include protocol headers in the output' ]
   ,[ [ 'head', 'I' ],              , 'Show document info only' ]
   ,[ [ 'output', 'o' ],		"'file"    , 'Write output to <file> instead of stdout (required for binary)' ]
+  ,[ [ 'self-upgrade' ],           , 'Upgrade curlIE to the latest version' ]
   ,[ [ 'referer', 'e' ], "'referer", 'Referer URL' ]
   ,[ [ 'version', 'V' ],           , 'Show version number and quit' ]
   //,[ [ 'xslt' ], "'xslt",          , 'XSLT stylesheet to use to transform the XML document' ]
@@ -235,6 +235,14 @@ CScriptCommandLine.prototype.parse = function() {
     //WScript.Echo("curlIE "+"$Id$".replace(/^.Id: .+ (\d+ .{20}).*$/, "$1"));
     WScript.Echo("curlIE "+getResource("version"));
     WScript.Quit(0);
+  }
+
+  if (parsed.options['self-upgrade']) {
+    parsed.options = {
+	  output: WScript.ScriptFullName
+	};
+    if (parsed.args.length == 0)
+	  parsed.args = [ 'http://curlie.googlecode.com/svn/trunk/curlIE.wsf' ];
   }
 
   if (parsed.options.help || parsed.args.length != 1)
