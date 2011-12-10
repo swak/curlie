@@ -40,161 +40,161 @@ this.vbObjectError = 0x80040000;
 // ==[ CommandLine prototype ]=================================================
 
 var CommandLine = function(commandName, options, unnamedArgs) {
-    this.commandName = commandName;
-    this.short = {};
-    this.long = {};
-    this.options = [];
-    this.unnamedArgs = unnamedArgs;
-    for(var o in options) {
-        var opt = new CommandLine.Option(options[o]);
-        this.options[opt.name] = opt;
-        if (opt.short)
-            for(var s in opt.short)
-               this.short[opt.short[s]] = opt;
-        if (opt.long)
-            for(var l in opt.long)
-               this.long[opt.long[l]] = opt;
-    }
-}
+	this.commandName = commandName;
+	this.short = {};
+	this.long = {};
+	this.options = [];
+	this.unnamedArgs = unnamedArgs;
+	for(var o in options) {
+		var opt = new CommandLine.Option(options[o]);
+		this.options[opt.name] = opt;
+		if (opt.short)
+			for(var s in opt.short)
+				this.short[opt.short[s]] = opt;
+		if (opt.long)
+			for(var l in opt.long)
+				this.long[opt.long[l]] = opt;
+	}
+};
 
 CommandLine.Option = function(opt) {
-		this.name = opt[0][0];
-		this.arg = opt.length > 1 ? opt[1] : false;
-		this.help = opt.length > 2 ? opt[2] : '';
-		this.callback = opt.length > 3 ? opt[3] : null;
-		this.defaut = this.arg ? ((opt.length > 4) ? opt[4] : '') : false;
-		this.short = null;
-		this.long = null;
-		for(var i in opt[0]) {
-            var name = opt[0][i];
-		    if (name.length === 1) {
-			if (this.short === null) this.short = new Array;
-			this.short.push(name);
-		    } else {
-			if (this.long === null) this.long = new Array;
-			this.long.push(name);
-            }
+	this.name = opt[0][0];
+	this.arg = opt.length > 1 ? opt[1] : false;
+	this.help = opt.length > 2 ? opt[2] : '';
+	this.callback = opt.length > 3 ? opt[3] : null;
+	this.defaut = this.arg ? ((opt.length > 4) ? opt[4] : '') : false;
+	this.short = null;
+	this.long = null;
+	for(var i in opt[0]) {
+		var name = opt[0][i];
+			if (name.length === 1) {
+				if (this.short === null) this.short = new Array;
+				this.short.push(name);
+			} else {
+				if (this.long === null) this.long = new Array;
+				this.long.push(name);
+			}
 		}
-    }
+	}
 
 CommandLine.prototype = {
-    defaut: function() {
-        var d = {};
-        for(var o in this.options) {
-            var opt = this.options[o];
-            if (opt.arg) {
-                var p = opt.arg.charAt(0);
-                if (p === '[')
-                    d[opt.name] = [];
-                else if (p === '+')
-                    d[opt.name] = 0;
-                else
-                    d[opt.name] = opt.defaut;
-            } else
-                d[opt.name] = opt.defaut;
-        }
-        return d;
-    },
-    usage: function() {
-        var opts = '', s;
-        for(o in this.options) {
-		    var opt = this.options[o];
-		    var s = '   ', t = '';
-		    if (opt.short)
-			s = ' -'+opt.short[0];
-		    if (opt.long)
-			t = '--'+opt.long[0];
-		    s = ' ' + (opt.short ? '-'+opt.short[0] : '  ')
+	defaut: function() {
+		var d = {};
+		for(var o in this.options) {
+			var opt = this.options[o];
+			if (opt.arg) {
+				var p = opt.arg.charAt(0);
+				if (p === '[')
+					d[opt.name] = [];
+				else if (p === '+')
+					d[opt.name] = 0;
+				else
+					d[opt.name] = opt.defaut;
+			} else
+				d[opt.name] = opt.defaut;
+		}
+		return d;
+	},
+	usage: function() {
+		var opts = '', s;
+		for(o in this.options) {
+			var opt = this.options[o];
+			var s = '   ', t = '';
+			if (opt.short)
+				s = ' -'+opt.short[0];
+			if (opt.long)
+				t = '--'+opt.long[0];
+			s = ' ' + (opt.short ? '-'+opt.short[0] : '  ')
 				+ (opt.short && opt.long ? '/' : ' ')
 				+ (opt.long ? '--'+opt.long[0]+' ' : '')
 				+ (opt.arg ? '<'+opt.arg.substr(1)+'> ' : '');
-            while (s.length < 20) s += ' ';
-            opts += s + opt.help.replace(/\n */g, '\n                     ') + '\n';
+			while (s.length < 20) s += ' ';
+			opts += s + opt.help.replace(/\n */g, '\n                     ') + '\n';
 		}
 		return 'Usage: '+this.commandName+' [options...] '+this.unnamedArgs.join(' ')+'\nOptions:\n'+opts;
-    },
-    parse: function(args) {
-        var values = this.defaut();
-        var optidx = 0;
-        for(; optidx<args.length; optidx++) {
-            var arg = args[optidx];
-            if (arg.length < 2 || arg.charAt(0) != '-')
-                break;
-            if (arg === '--' ) {
-                optidx++;
-                break;
-            }
-            var opt;
-            if (arg.length > 2 && arg.charAt(1) === '-') {
-			var name = arg.substr(2);
-                if (! (name in this.long))
-			    throw new Error(vbObjectError+2000, "unknown option: "+ arg);
-			opt = this.long[name];
-            } else {
-			var name = arg.charAt(1);
-			if (! (name in this.short))
-			    throw new Error(vbObjectError+2000, "unknown option: "+ arg);
-                opt = this.short[name];
-            }
-            var optval = true;
-            if (opt.arg) {
-                optidx++;
-                if (optidx === args.length)
-                    throw new Error(vbObjectError+2001, "missing argument for option " + arg);
-                var optval = args[optidx];
-                if (opt.callback)
-                     optval = opt.callback(optval, values[opt.name]);
-            } else if (typeof values[opt.name] === 'Number') {
-			optval = values[opt.name] + (optval ? 1 : -1);
-		    }
-            if (typeof values[opt.name] === 'object' && values[opt.name].constructor === Array)
-                values[opt.name].push(optval);
-            else
-                values[opt.name] = optval;
-        }
-        return {
-            options: values,
-            args: args.slice(optidx)
-        };
-    }
+	},
+	parse: function(args) {
+		var values = this.defaut();
+		var optidx = 0;
+		for(; optidx<args.length; optidx++) {
+			var arg = args[optidx];
+			if (arg.length < 2 || arg.charAt(0) != '-')
+				break;
+			if (arg === '--' ) {
+				optidx++;
+				break;
+			}
+			var opt;
+			if (arg.length > 2 && arg.charAt(1) === '-') {
+				var name = arg.substr(2);
+				if (! (name in this.long))
+					throw new Error(vbObjectError+2000, "unknown option: "+ arg);
+				opt = this.long[name];
+			} else {
+				var name = arg.charAt(1);
+				if (! (name in this.short))
+					throw new Error(vbObjectError+2000, "unknown option: "+ arg);
+				opt = this.short[name];
+			}
+			var optval = true;
+			if (opt.arg) {
+				optidx++;
+				if (optidx === args.length)
+					throw new Error(vbObjectError+2001, "missing argument for option " + arg);
+				var optval = args[optidx];
+				if (opt.callback)
+					 optval = opt.callback(optval, values[opt.name]);
+			} else if (typeof values[opt.name] === 'Number') {
+				optval = values[opt.name] + (optval ? 1 : -1);
+			}
+			if (typeof values[opt.name] === 'object' && values[opt.name].constructor === Array)
+				values[opt.name].push(optval);
+			else
+				values[opt.name] = optval;
+		}
+		return {
+			options: values,
+			args: args.slice(optidx)
+		};
+	}
 };
 
 
 // ==[ CScriptCommandLine prototype ]==========================================
 
 var CScriptCommandLine = function(options, unnamedArgs) {
-    var env = WScript.FullName.replace(/^.*\\(.*).exe/i, "$1");
-    if (env.toLowerCase() != 'cscript') {
-        WScript.Echo('You shoud launch the command from a DOS window.\r\n'+
-                     '"CScript" engine expected instead of "'+env+'".');
-        WScript.Quit(1);
-    }
-    return this.CommandLine$(WScript.ScriptName, options, unnamedArgs);
+	var env = WScript.FullName.replace(/^.*\\(.*).exe/i, "$1");
+	if (env.toLowerCase() != 'cscript') {
+		WScript.Echo('You shoud launch the command from a DOS window.\r\n'+
+					 '"CScript" engine expected instead of "'+env+'".');
+		WScript.Quit(1);
+	}
+	return this.CommandLine$(WScript.ScriptName, options, unnamedArgs);
 }
 CScriptCommandLine.prototype.CommandLine$ = CommandLine;
 
 for(var v in CommandLine.prototype) {
-    CScriptCommandLine.prototype[v] = CommandLine.prototype[v];
+	CScriptCommandLine.prototype[v] = CommandLine.prototype[v];
 }
 
 CScriptCommandLine.prototype.CommandLine$usage = CommandLine.prototype.usage;
 CScriptCommandLine.prototype.usage = function() {
-    WScript.StdErr.Write(this.CommandLine$usage().replace(/\r?\n/g, '\r\n'));
-    WScript.Quit(127);
+	WScript.StdErr.Write(this.CommandLine$usage().replace(/\r?\n/g, '\r\n'));
+	WScript.Quit(127);
 }
 CScriptCommandLine.prototype.CommandLine$parse = CommandLine.prototype.parse;
 CScriptCommandLine.prototype.parse = function() {
-    var args = [];
-    for(var optidx=0; optidx<WScript.Arguments.length; optidx++)
-        args.push(WScript.Arguments(optidx));
-    try {
-        var r = this.CommandLine$parse(args);
-    } catch (e) {
-        WScript.Echo(e.description);
-        WScript.StdErr.Write(this.usage());
-        WScript.Quit(1);
-    }
-    return r;
+	var args = [];
+	for(var optidx=0; optidx<WScript.Arguments.length; optidx++)
+		args.push(WScript.Arguments(optidx));
+	try {
+		var r = this.CommandLine$parse(args);
+	} catch (e) {
+		WScript.Echo(e.description);
+		WScript.StdErr.Write(this.usage());
+		WScript.Quit(1);
+	}
+	return r;
 }
 
 
