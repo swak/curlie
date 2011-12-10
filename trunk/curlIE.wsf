@@ -67,11 +67,11 @@ CommandLine.Option = function(opt) {
 		this.long = null;
 		for(var i in opt[0]) {
             var name = opt[0][i];
-		    if (name.length == 1) {
-			if (this.short == null) this.short = new Array;
+		    if (name.length === 1) {
+			if (this.short === null) this.short = new Array;
 			this.short.push(name);
 		    } else {
-			if (this.long == null) this.long = new Array;
+			if (this.long === null) this.long = new Array;
 			this.long.push(name);
             }
 		}
@@ -84,9 +84,9 @@ CommandLine.prototype = {
             var opt = this.options[o];
             if (opt.arg) {
                 var p = opt.arg.charAt(0);
-                if (p == '[')
+                if (p === '[')
                     d[opt.name] = [];
-                else if (p == '+')
+                else if (p === '+')
                     d[opt.name] = 0;
                 else
                     d[opt.name] = opt.defaut;
@@ -121,12 +121,12 @@ CommandLine.prototype = {
             var arg = args[optidx];
             if (arg.length < 2 || arg.charAt(0) != '-')
                 break;
-            if (arg == '--' ) {
+            if (arg === '--' ) {
                 optidx++;
                 break;
             }
             var opt;
-            if (arg.length > 2 && arg.charAt(1) == '-') {
+            if (arg.length > 2 && arg.charAt(1) === '-') {
 			var name = arg.substr(2);
                 if (! (name in this.long))
 			    throw new Error(vbObjectError+2000, "unknown option: "+ arg);
@@ -140,15 +140,15 @@ CommandLine.prototype = {
             var optval = true;
             if (opt.arg) {
                 optidx++;
-                if (optidx == args.length)
+                if (optidx === args.length)
                     throw new Error(vbObjectError+2001, "missing argument for option " + arg);
                 var optval = args[optidx];
                 if (opt.callback)
                      optval = opt.callback(optval, values[opt.name]);
-            } else if (typeof values[opt.name] == 'Number') {
+            } else if (typeof values[opt.name] === 'Number') {
 			optval = values[opt.name] + (optval ? 1 : -1);
 		    }
-            if (typeof values[opt.name] == 'object' && values[opt.name].constructor == Array)
+            if (typeof values[opt.name] === 'object' && values[opt.name].constructor === Array)
                 values[opt.name].push(optval);
             else
                 values[opt.name] = optval;
@@ -220,6 +220,7 @@ CScriptCommandLine.prototype.parse = function() {
   ,[ [ 'output', 'o' ],		"'file"    , 'Write output to <file> instead of stdout (required for binary)' ]
   ,[ [ 'referer', 'e' ], "'referer", 'Referer URL' ]
   ,[ [ 'version', 'V' ],           , 'Show version number and quit' ]
+  //,[ [ 'xslt' ], "'xslt",          , 'XSLT stylesheet to use to transform the XML document' ]
 ], [
    [ 'url' ]
 ]);
